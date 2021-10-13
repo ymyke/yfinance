@@ -3,13 +3,13 @@ Installation
 
 Install `yfinance` using `pip`:
 
-``` {.sourceCode .bash}
+``` bash
 $ pip install yfinance --upgrade --no-cache-dir
 ```
 
 Install `yfinance` using `conda`:
 
-``` {.sourceCode .bash}
+``` bash
 $ conda install -c ranaroussi yfinance
 ```
 
