@@ -9,7 +9,7 @@ Pythonic way:
 
 Note: yahoo finance datetimes are received as UTC.
 
-``` {.sourceCode .python}
+``` python
 import yfinance as yf
 
 msft = yf.Ticker("MSFT")
@@ -74,7 +74,7 @@ opt = msft.option_chain('YYYY-MM-DD')
 
 If you want to use a proxy server for downloading data, use:
 
-``` {.sourceCode .python}
+``` python
 import yfinance as yf
 
 msft = yf.Ticker("MSFT")
@@ -93,7 +93,7 @@ To use a custom `requests` session (for example to cache calls to the
 API or customize the `User-agent` header), pass a `session=` argument to
 the Ticker constructor.
 
-``` {.sourceCode .python}
+``` python
 import requests_cache
 session = requests_cache.CachedSession('yfinance.cache')
 session.headers['User-agent'] = 'my-program/1.0'
@@ -104,7 +104,7 @@ ticker.actions
 
 To initialize multiple `Ticker` objects, use
 
-``` {.sourceCode .python}
+``` python
 import yfinance as yf
 
 tickers = yf.Tickers('msft aapl goog')
@@ -119,14 +119,14 @@ tickers.tickers.GOOG.actions
 Fetching data for multiple tickers
 ----------------------------------
 
-``` {.sourceCode .python}
+``` python
 import yfinance as yf
 data = yf.download("SPY AAPL", start="2017-01-01", end="2017-04-30")
 ```
 
 I've also added some options to make life easier :)
 
-``` {.sourceCode .python}
+``` python
 data = yf.download(  # or pdr.get_data_yahoo(...
         # tickers list or string as well
         tickers = "SPY AAPL MSFT",
@@ -187,7 +187,7 @@ faster, you can "hijack" `pandas_datareader.data.get_data_yahoo()`
 method to use **yfinance** while making sure the returned data is in the
 same format as **pandas\_datareader**'s `get_data_yahoo()`.
 
-``` {.sourceCode .python}
+``` python
 from pandas_datareader import data as pdr
 
 import yfinance as yf
