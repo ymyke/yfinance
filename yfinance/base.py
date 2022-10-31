@@ -220,6 +220,7 @@ class TickerBase():
                 timeout=timeout
             )
             if "Will be right back" in data.text or data is None:
+                utils.session_cache_prune_url(session, url)
                 raise RuntimeError("*** YAHOO! FINANCE IS CURRENTLY DOWN! ***\n"
                                    "Our engineers are working quickly to resolve "
                                    "the issue. Thank you for your patience.")
@@ -245,6 +246,7 @@ class TickerBase():
             err_msg = "Period '{}' is invalid, must be one of {}".format(period, data["chart"]["result"][0]["meta"]["validRanges"])
             fail = True
         if fail:
+            utils.session_cache_prune_url(session, url)
             shared._DFS[self.ticker] = utils.empty_df()
             shared._ERRORS[self.ticker] = err_msg
             if "many" not in kwargs and debug_mode:
@@ -263,6 +265,7 @@ class TickerBase():
                 if quotes.index[quotes.shape[0]-1] >= endDt:
                     quotes = quotes.iloc[0:quotes.shape[0]-1]
         except Exception:
+            utils.session_cache_prune_url(session, url)
             shared._DFS[self.ticker] = utils.empty_df()
             shared._ERRORS[self.ticker] = err_msg
             if "many" not in kwargs and debug_mode:
@@ -309,6 +312,7 @@ class TickerBase():
             elif back_adjust:
                 quotes = utils.back_adjust(quotes)
         except Exception as e:
+            utils.session_cache_prune_url(session, url)
             if auto_adjust:
                 err_msg = "auto_adjust failed with %s" % e
             else:
@@ -581,6 +585,7 @@ class TickerBase():
             data = session.get(url=url, params=params, proxies=proxy, headers=utils.user_agent_headers, timeout=timeout)
             data = data.json()
         except Exception as e:
+            utils.session_cache_prune_url(session, url)
             if debug_mode:
                 print("Failed to get ticker '{}' reason: {}".format(self.ticker, e))
             return None
@@ -600,6 +605,9 @@ class TickerBase():
                         print("-------------")
                         print(" {}".format(data))
                         print("-------------")
+
+        # If here then failed
+        utils.session_cache_prune_url(session, url)
         return None
 
     def _get_info(self, proxy=None):
@@ -798,6 +806,9 @@ class TickerBase():
                 self._financials[name]["yearly"] = annual
             if qtr is not None:
                 self._financials[name]["quarterly"] = qtr
+            if annual is None or qtr is None:
+                # Assume Yahoo spam detection triggered, returning bad data
+                utils.session_cache_prune_url(self.session, ticker_url + '/financials')
 
         # earnings
         if isinstance(fin_data_quote.get('earnings'), dict):
@@ -815,6 +826,8 @@ class TickerBase():
                 df.index.name = 'Quarter'
                 self._earnings['quarterly'] = df
             except Exception:
+                # Assume Yahoo spam detection triggered, returning bad data
+                utils.session_cache_prune_url(self.session, ticker_url + '/financials')
                 pass
 
         # shares outstanding
@@ -830,6 +843,8 @@ class TickerBase():
                 columns={'reportedValue': "BasicShares"}, inplace=True)
             self._shares = shares
         except Exception:
+            # Assume Yahoo spam detection triggered, returning bad data
+            utils.session_cache_prune_url(self.session, ticker_url + '/financials')
             pass
 
         # Analysis
@@ -858,16 +873,18 @@ class TickerBase():
                 self._earnings_trend = analysis[[
                     c for c in analysis.columns if c not in dict_cols]]
             except Exception:
+                # Assume Yahoo spam detection triggered, returning bad data
+                utils.session_cache_prune_url(self.session, ticker_url + '/financials')
                 pass
 
         # Complementary key-statistics (currently fetching the important trailingPegRatio which is the value shown in the website)
         res = {}
+        my_headers = {'user-agent': 'curl/7.55.1', 'accept': 'application/json', 'content-type': 'application/json',
+                      'referer': 'https://finance.yahoo.com/', 'cache-control': 'no-cache', 'connection': 'close'}
+        p = _re.compile(r'root\.App\.main = (.*);')
+        url = 'https://finance.yahoo.com/quote/{}/key-statistics?p={}'.format(self.ticker, self.ticker)
         try:
-            my_headers = {'user-agent': 'curl/7.55.1', 'accept': 'application/json', 'content-type': 'application/json',
-                          'referer': 'https://finance.yahoo.com/', 'cache-control': 'no-cache', 'connection': 'close'}
-            p = _re.compile(r'root\.App\.main = (.*);')
-            r = _requests.session().get('https://finance.yahoo.com/quote/{}/key-statistics?p={}'.format(self.ticker,
-                                                                                                        self.ticker), headers=my_headers)
+            r = _requests.session().get(url, headers=my_headers)
             q_results = {}
             my_qs_keys = ['pegRatio']  # QuoteSummaryStore
             # , 'quarterlyPegRatio']  # QuoteTimeSeriesStore
@@ -897,6 +914,8 @@ class TickerBase():
             res = {'Company': ticker}
             q_results[ticker].append(res)
         except Exception:
+            # Assume Yahoo spam detection triggered, returning bad data
+            utils.session_cache_prune_url(self.session, url)
             pass
 
         if 'trailingPegRatio' in res:

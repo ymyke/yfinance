@@ -110,6 +110,28 @@ def empty_earnings_dates_df():
     return empty
 
 
+def session_cache_prune_url(session, url):
+    if session is None:
+        return
+    if not isinstance(url, str):
+        return
+
+    try:
+        c = session.cache
+    except AttributeError:
+        # Not a caching session
+        return
+
+    # Only import requests_cache if session has a cache attribute, 
+    # because it's an optional module
+    import requests_cache
+    if not isinstance(c, requests_cache.BaseCache):
+        # Unlikely but technically possible
+        return
+
+    c.delete(urls=[url])
+
+
 def get_html(url, proxy=None, session=None):
     session = session or _requests
     html = session.get(url=url, proxies=proxy, headers=user_agent_headers).text
