@@ -146,19 +146,6 @@ msft.option_chain(..., proxy="PROXY_SERVER")
 ...
 ```
 
-To use a custom `requests` session (for example to cache calls to the
-API or customize the `User-agent` header), pass a `session=` argument to
-the Ticker constructor.
-
-```python
-import requests_cache
-session = requests_cache.CachedSession('yfinance.cache')
-session.headers['User-agent'] = 'my-program/1.0'
-ticker = yf.Ticker('msft aapl goog', session=session)
-# The scraped response will be stored in the cache
-ticker.actions
-```
-
 To initialize multiple `Ticker` objects, use
 
 ```python
@@ -172,6 +159,29 @@ tickers.tickers.MSFT.info
 tickers.tickers.AAPL.history(period="1mo")
 tickers.tickers.GOOG.actions
 ```
+
+### Caching
+
+Heavy users will quickly encounter Yahoo's rate limits on free use. 
+A `requests` session can help by caching web requests. 
+To use, pass a `session=` argument to the Ticker constructor:
+
+```python
+import requests_cache
+session = requests_cache.CachedSession('yfinance.cache')
+# session.headers['User-agent'] = 'my-program/1.0'  # <- Optional
+ticker = yf.Ticker('msft aapl goog', session=session)
+# The scraped response will be stored in the cache
+ticker.actions
+```
+To assist, `yfinance` removes bad/mangled data returned by Yahoo from the session.
+
+
+Add expiration to the session to prune old data:
+```python
+session = requests_cache.CachedSession('yfinance.cache', expire_after=datetime.timedelta(days=30))
+```
+More info here: https://requests-cache.readthedocs.io/en/stable/user_guide/expiration.html
 
 ### Fetching data for multiple tickers
 
@@ -230,7 +240,7 @@ data = yf.download(  # or pdr.get_data_yahoo(...
 ### Timezone cache store
 
 When fetching price data, all dates are localized to stock exchange timezone. 
-But timezone retrieval is relatively slow, so yfinance attemps to cache them 
+But timezone retrieval is relatively slow so yfinance attemps to cache them 
 in your users cache folder. 
 You can direct cache to use a different location with `set_tz_cache_location()`:
 ```python
