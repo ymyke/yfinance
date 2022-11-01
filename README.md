@@ -179,7 +179,7 @@ To assist, `yfinance` removes bad/mangled data returned by Yahoo from the sessio
 
 Add expiration to the session to prune old data:
 ```python
-session = requests_cache.CachedSession('yfinance.cache', expire_after=datetime.timedelta(days=30))
+session = requests_cache.CachedSession('yfinance.cache', expire_after=datetime.timedelta(minutes=60))
 ```
 More info here: https://requests-cache.readthedocs.io/en/stable/user_guide/expiration.html
 
