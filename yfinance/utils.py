@@ -808,7 +808,9 @@ class _TzCache:
         if not _os.path.isfile(fp):
             return None
         df = _pd.read_csv(fp, index_col="Ticker")
-        self.tz_db.bulk_set(df.to_dict()['Tz'])
+        df = df[~(df["Tz"].isna()|df.index.isna())]
+        if df.shape[0]>0:
+            self.tz_db.bulk_set(df.to_dict()['Tz'])
         _os.remove(fp)
 
 
