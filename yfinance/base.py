@@ -176,7 +176,9 @@ class TickerBase():
                 return utils.empty_df()
 
             if end is None:
-                end = int(_time.time())
+                dt_now = _pd.Timestamp(_datetime.datetime.utcnow()).tz_localize("UTC")
+                midnight = _pd.Timestamp.combine(dt_now.tz_convert(tz).date()+_datetime.timedelta(days=1), _datetime.time(0)).tz_localize(tz)
+                end = int(midnight.timestamp())
             else:
                 end = utils._parse_user_dt(end, tz)
             if start is None:
