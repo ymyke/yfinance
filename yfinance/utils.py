@@ -319,7 +319,7 @@ def get_financials_time_series(ticker, name, timescale, ticker_url, proxy=None, 
     url = ts_url_base + "&type=" + ",".join([timescale+k for k in keys])
     # Yahoo returns maximum 4 years or 5 quarters, regardless of start_dt:
     start_dt = _datetime.datetime(2016, 12, 31)
-    end = (_datetime.datetime.now() + _datetime.timedelta(days=366))
+    end = _datetime.datetime.combine(_datetime.date.today(), _datetime.time(0)) + _datetime.timedelta(days=2)
     url += "&period1={}&period2={}".format(int(start_dt.timestamp()), int(end.timestamp()))
 
     # Step 3: fetch and reshape data
